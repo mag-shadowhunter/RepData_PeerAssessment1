@@ -8,104 +8,110 @@ output:
 
 ## Loading and preprocessing the data
 
-
+```{r}
 
 data <- read.csv("activity.csv")  
 
-summary(data)
-
-str(data)
-
-head(data)
-
-data$date <- as.Date(data$date, format = "%Y-%m-%d")
-data$interval <- factor(data$interval)
-
-
+```
 ## What is mean total number of steps taken per day?
 
-NA_ind <- is.na(as.character(data$steps))
-data_no_NA <- data[!NA_ind,]
-head(data_no_NA)
+```{r}
 
-per_day_steps <- aggregate(steps ~ date, data_no_NA, sum)
+per_day_steps <- aggregate(steps ~ date, data, sum)
 
-colnames(per_day_steps) <- c("date", "steps")
+plot1 <- hist(per_day_steps$steps, main = paste("Total Steps per Day"), col="green",xlab="Number of Steps")
 
-plot1 <- hist(as.numeric(per_day_steps$steps), col = "red", xlab = "Number of Steps", main= "Total no. of steps taken each day")
-plot1 
+plot1
 
-#Mean
 total_mean <- mean(per_day_steps$steps)
 total_mean
 
-#Median
-steps_median <-median(per_day_steps$steps)
-steps_median 
+steps_median <- median(per_day_steps$steps)
+steps_median
 
+```
 
 ## What is the average daily activity pattern?
 
-steps_per_intv <- aggregate(steps ~ interval, data, mean)
+```{r}
+steps_for_intv <- aggregate(steps ~ interval, data, mean)
 
-#Adding columns names
-colnames(steps_per_intv) <- c("interval", "average_steps")
-
-#ploting the average daily activity pattern 
-plot2 <- plot(as.integer(levels(steps_per_intv$interval)), 
-     steps_per_intv$average_steps, type="l",
-     xlab = "Interval", ylab="Number of Steps",main="Average No. of Steps per Day (by Interval),  col ="blue")
+plot2 <- plot(steps_for_intv$interval,steps_for_intv$steps, type="l", xlab="Interval", ylab="Number of Steps",main="Average No. of Steps per Day (by Interval)")
 
 plot2
 
+
 max_int <- steps_for_intv[which.max(steps_for_intv$steps),1]
+
 max_int
+
+```
 
 ## Imputing missing values
 
-sum(is.na(as.character(data$steps)))
+```{r}
+Total_missing <- sum(!complete.cases(data))
+Total_missing
 
-sum(is.na(as.character(data$date)))
+Av_steps <- aggregate(steps ~ interval, data = data, FUN = mean)
 
-sum(is.na(as.character(data$interval)))
+fillNA <- numeric()
 
-t_missing <- which(is.na(as.character(data$steps)))
-t_missing
+for (i in 1:nrow(data)) {
+    obs <- data[i, ]
+    if (is.na(obs$steps)) {
+        steps <- subset(Av_steps, interval == obs$interval)$steps
+    } else {
+        steps <- obs$steps
+    }
+    fillNA <- c(fillNA, steps)
+}
 
-f_data <- data
+#Create a new d̥ataset with the missing values
 
-f_data[t_missing, ]$steps<-unlist(lapply(t_missing, FUN=function(t_missing){
-                steps_per_interval[data[t_missing,]$interval==steps_per_interval$interval,]$average_steps
-                }))
+new_dset<- data
 
-summary(f_data)
+new_dset$steps <- fillNA
 
-str(f_data)
+##histogram of the total number of steps
+Total_steps <- aggregate(steps ~ date, data = new_dset, sum, na.rm = TRUE)
 
-total_per_day_steps <- aggregate(steps ~ date, data = f_data, sum)
+hist(Total_steps$steps, main = paste("Total Steps per Day"), col="blue", xlab="No. of Steps")
+```
 
-colnames(total_per_day_steps) <- c("date", "steps")
+#Create Histogram to show difference. 
 
-hist(as.numeric(total_per_day_steps$steps), breaks = 20, col = "red",
-     xlab = "Number of Steps", 
-     main= "Histogram of the total number of steps taken each day")
+```{r}
+hist(per_day_steps$steps,breaks = 20, main = paste("Total Steps per Day"), col="green", xlab="No. of Steps")
 
 legend("topright", c("Imputed", "Non-imputed"), col=c("blue", "green"), lwd=10)
 
-mean(total_per_day_steps$steps)
+```
 
-median(total_per_day_steps$steps)
+Mean and median
 
+```{r}
+
+total_mean <- mean(Total_steps$steps)
+total_mean
+
+total_median <- median(Total_steps$steps)
+total_median
+
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
+```{r}
 days <- c("Monday", "Tuesday", "Wednesday", "Thursday", 
               "Friday")
               
-total_per_day_steps$dow = as.factor(ifelse(is.element(weekdays(as.Date(new_activity$date)),days), "Weekday", "Weekend"))
+new_dset$dow = as.factor(ifelse(is.element(weekdays(as.Date(new_dset$date)),days), "Weekday", "Weekend"))
 
-Total_steps1 <- aggregate(steps ~ interval + dow, new_activity, mean)
+Total_steps <- aggregate(steps ~ interval + dow, new_dset, mean)
 
 library(lattice)
 
-xyplot(total_per_day_steps$steps ~ StepsTotalUnion$interval|StepsTotalUnion$dow, main="Av. Steps per Day (by Interval)",xlab="Interval", ylab="Steps",layout=c(1,2), type="l")
+xyplot(Total_steps$steps ~ Total_steps$interval|Total_steps$dow, main="Av. Steps per Day (by Interval)",xlab="Interval", ylab="Steps",layout=c(1,2), type="l")
+
+```
