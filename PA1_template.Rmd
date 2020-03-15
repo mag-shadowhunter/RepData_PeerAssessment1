@@ -82,7 +82,7 @@ hist(Total_steps$steps, main = paste("Total Steps per Day"), col="blue", xlab="N
 #Create Histogram to show difference. 
 
 ```{r}
-hist(per_day_steps$steps,breaks = 20, main = paste("Total Steps per Day"), col="green", xlab="No. of Steps")
+hist(per_day_steps$steps, main = paste("Total Steps per Day"), col="green", xlab="No. of Steps")
 
 legend("topright", c("Imputed", "Non-imputed"), col=c("blue", "green"), lwd=10)
 
