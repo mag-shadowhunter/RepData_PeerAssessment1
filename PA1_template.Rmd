@@ -10,16 +10,102 @@ output:
 
 
 
+data <- read.csv("activity.csv")  
+
+summary(data)
+
+str(data)
+
+head(data)
+
+data$date <- as.Date(data$date, format = "%Y-%m-%d")
+data$interval <- factor(data$interval)
+
+
 ## What is mean total number of steps taken per day?
 
+NA_ind <- is.na(as.character(data$steps))
+data_no_NA <- data[!NA_ind,]
+head(data_no_NA)
+
+per_day_steps <- aggregate(steps ~ date, data_no_NA, sum)
+
+colnames(per_day_steps) <- c("date", "steps")
+
+plot1 <- hist(as.numeric(per_day_steps$steps), col = "red", xlab = "Number of Steps", main= "Total no. of steps taken each day")
+plot1 
+
+#Mean
+total_mean <- mean(per_day_steps$steps)
+total_mean
+
+#Median
+steps_median <-median(per_day_steps$steps)
+steps_median 
 
 
 ## What is the average daily activity pattern?
 
+steps_per_intv <- aggregate(steps ~ interval, data, mean)
 
+#Adding columns names
+colnames(steps_per_intv) <- c("interval", "average_steps")
+
+#ploting the average daily activity pattern 
+plot2 <- plot(as.integer(levels(steps_per_intv$interval)), 
+     steps_per_intv$average_steps, type="l",
+     xlab = "Interval", ylab="Number of Steps",main="Average No. of Steps per Day (by Interval),  col ="blue")
+
+plot2
+
+max_int <- steps_for_intv[which.max(steps_for_intv$steps),1]
+max_int
 
 ## Imputing missing values
 
+sum(is.na(as.character(data$steps)))
+
+sum(is.na(as.character(data$date)))
+
+sum(is.na(as.character(data$interval)))
+
+t_missing <- which(is.na(as.character(data$steps)))
+t_missing
+
+f_data <- data
+
+f_data[t_missing, ]$steps<-unlist(lapply(t_missing, FUN=function(t_missing){
+                steps_per_interval[data[t_missing,]$interval==steps_per_interval$interval,]$average_steps
+                }))
+
+summary(f_data)
+
+str(f_data)
+
+total_per_day_steps <- aggregate(steps ~ date, data = f_data, sum)
+
+colnames(total_per_day_steps) <- c("date", "steps")
+
+hist(as.numeric(total_per_day_steps$steps), breaks = 20, col = "red",
+     xlab = "Number of Steps", 
+     main= "Histogram of the total number of steps taken each day")
+
+legend("topright", c("Imputed", "Non-imputed"), col=c("blue", "green"), lwd=10)
+
+mean(total_per_day_steps$steps)
+
+median(total_per_day_steps$steps)
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+days <- c("Monday", "Tuesday", "Wednesday", "Thursday", 
+              "Friday")
+              
+total_per_day_steps$dow = as.factor(ifelse(is.element(weekdays(as.Date(new_activity$date)),days), "Weekday", "Weekend"))
+
+Total_steps1 <- aggregate(steps ~ interval + dow, new_activity, mean)
+
+library(lattice)
+
+xyplot(total_per_day_steps$steps ~ StepsTotalUnion$interval|StepsTotalUnion$dow, main="Av. Steps per Day (by Interval)",xlab="Interval", ylab="Steps",layout=c(1,2), type="l")
